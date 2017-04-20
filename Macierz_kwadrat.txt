@@ -1,5 +1,5 @@
 //Program szyfrujacy/deszyfrujacy tekst znajdujacy sie w pliku za pomoca algorytmu ELO POMELO
-//przestawieniowego - metoda kwadratu (macierzy)
+//przestawieniowego - metoda kwadratu (macierzy)jaaaaa
 <<<<<<< HEAD
  55555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555
 =======
