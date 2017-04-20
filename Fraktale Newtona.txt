@@ -1,0 +1,370 @@
+// Fraktale Newtona
+// www.algorytm.org
+// Tomasz Lubinski (c) 2009
+<<<<<<< HEAD
+ 333333333333333333333333333333333333333333333333333333333333333333333333333333
+=======
+ 
+asdfasdfasdfasdfasdfasdfas
+>>>>>>> TEST
+unit Newton;
+ 
+interface
+ 
+uses
+Windows, Messages, SysUtils, Classes, Graphics, Controls, Forms, Dialogs,
+StdCtrls, ExtCtrls, Math, Grids;
+ 
+type
+TForm1 = class(TForm)
+Fractal: TImage;
+Label1: TLabel;
+Label2: TLabel;
+Selection: TShape;
+Label3: TLabel;
+minx: TEdit;
+maxx: TEdit;
+miny: TEdit;
+maxy: TEdit;
+Button1: TButton;
+Label6: TLabel;
+Label5: TLabel;
+Button2: TButton;
+Label7: TLabel;
+Label8: TLabel;
+aArray: TStringGrid;
+aRe: TEdit;
+aIm: TEdit;
+colorIteration: TRadioButton;
+colorSet: TRadioButton;
+procedure Button1Click(Sender: TObject);
+procedure FormCreate(Sender: TObject);
+procedure FractalMouseDown(Sender: TObject; Button: TMouseButton;
+Shift: TShiftState; X, Y: Integer);
+procedure FractalMouseUp(Sender: TObject; Button: TMouseButton;
+Shift: TShiftState; X, Y: Integer);
+procedure FractalMouseMove(Sender: TObject; Shift: TShiftState; X,
+Y: Integer);
+private
+{ Private declarations }
+public
+{ Public declarations }
+end;
+ 
+//type for complex numbers
+type complex_t = record
+real: Extended;
+imaginary: Extended;
+end;
+ 
+var
+Form1: TForm1;
+ 
+implementation
+ 
+{$R *.DFM}
+ 
+var
+//---------------------------------------------------------------------------
+//Describes places to render
+ratioX, ratioY :Extended;
+min_X, min_Y, max_X, max_Y :Extended;
+downX, downY: Integer;
+//colors
+colors: array[1..100] of TColor;
+//result sets
+results: array[1..10] of complex_t;
+resultsCnt: Integer;
+//how to color fractal
+cSet: boolean;
+//---------------------------------------------------------------------------
+ 
+//for HSV colors
+procedure hsv2rgb(hue: double; sat: double; val: double; var red: double; var grn: double; var blu: double);
+var
+i, f, p, q, t: double;
+begin
+red := 0;
+grn := 0;
+blu := 0;
+if val=0 then
+begin
+red := 0;
+grn := 0;
+blu := 0;
+end
+else
+begin
+hue := hue/60;
+i := floor(hue);
+f := hue-i;
+p := val*(1-sat);
+q := val*(1-(sat*f));
+t := val*(1-(sat*(1-f)));
+if i=0 then begin red:=val; grn:=t; blu:=p; end
+else if i=1 then begin red:=q; grn:=val; blu:=p; end
+else if i=2 then begin red:=p; grn:=val; blu:=t; end
+else if i=3 then begin red:=p; grn:=q; blu:=val; end
+else if i=4 then begin red:=t; grn:=p; blu:=val; end
+else if i=5 then begin red:=val; grn:=p; blu:=q; end;
+end;
+end;
+ 
+procedure initializeColors();
+var
+i: Integer;
+r, g, b: double;
+begin
+for i:=low(colors) to high(colors) do
+begin
+HSV2RGB(2.5*i, 0.85, 0.8, r, g, b);
+colors[i] :=  Round((r*255) + (Round(g*255) shl 8) + (Round(b*255) shl 16));
+end;
+colors[100] := 0;
+end;
+ 
+//calculate squared modus of given complex c
+function complexModSq(c: complex_t): Extended;
+begin
+Result := c.real*c.real + c.imaginary*c.imaginary;
+end;
+ 
+//complex addition
+function add(a: complex_t; b: complex_t ): complex_t;
+begin
+Result.real :=  a.real + b.real;
+Result.imaginary := a.imaginary + b.imaginary;
+end;
+ 
+//complex substraction
+function sub(a: complex_t; b: complex_t): complex_t;
+begin
+Result.real :=  a.real - b.real;
+Result.imaginary := a.imaginary - b.imaginary;
+end;
+ 
+//complex multiplication
+function mul(a: complex_t; b: complex_t): complex_t;
+begin
+Result.real :=  a.real*b.real - a.imaginary*b.imaginary;
+Result.imaginary := a.real*b.imaginary + a.imaginary*b.real;
+end;
+ 
+//complex divide
+function divide(a: complex_t; b: complex_t): complex_t;
+var
+x: Extended;
+begin
+x := b.real*b.real + b.imaginary*b.imaginary;
+ 
+Result.real :=  (a.real*b.real + a.imaginary*b.imaginary) / x;
+Result.imaginary := (a.imaginary*b.real - a.real*b.imaginary) / x;
+end;
+ 
+//function f(p)=p
+function f(p: complex_t): complex_t;
+begin
+Result := p;
+end;
+ 
+//function g(z) = z^2 + c
+function g(z: complex_t; c: complex_t): complex_t;
+begin
+Result.real := z.real*z.real - z.imaginary*z.imaginary + c.real;
+Result.imaginary := 2*z.real*z.imaginary + c.imaginary;
+end;
+ 
+//func = a[0] + a[1]*z^1 + a[2]*z^2 + ... a[n]*z^2
+function func(z: complex_t; a: Array of complex_t): complex_t;
+var
+i: Integer;
+begin
+Result.real := 0;
+Result.imaginary := 0;
+ 
+for i:=high(a) downto low (a) do
+Result := add(a[i], mul(Result, z));
+end;
+ 
+function findResult(a: complex_t): Integer;
+var
+i: Integer;
+begin
+for i:=1 to resultsCnt do
+if (complexModSq(sub(a, results[i])) < 0.1) then
+begin
+Result := i;
+Exit;
+end;
+ 
+results[resultsCnt] := a;
+resultsCnt := resultsCnt + 1;
+Result := resultsCnt;
+end;
+ 
+//value is inside set in the returned level
+function levelSet(a: complex_t; p: complex_t; w: Array of complex_t; d: Array of complex_t): Integer;
+var
+z, z_prev: complex_t;
+iteration: Integer;
+begin
+ 
+iteration := 0;
+z := p;
+ 
+repeat
+z_prev := z;
+z := sub(z, mul(a, divide(func(z, w), func(z, d))));
+iteration := iteration + 1;
+until ((complexModSq(sub(z_prev,z)) <= 0.0001) or (iteration >= 100));
+ 
+Result := iteration;
+ 
+if (cSet = true) and (iteration < 100) then
+Result := 10*findResult(z);
+end;
+ 
+ 
+procedure TForm1.Button1Click(Sender: TObject);
+var
+i, j, level: Integer;
+p, a: complex_t;
+w: Array[0..5] of complex_t;
+d: Array[0..4] of complex_t;
+begin
+min_X := StrToFloat(minx.Text);
+min_Y := StrToFloat(miny.Text);
+max_X := StrToFloat(maxx.Text);
+max_Y := StrToFloat(maxy.Text);
+ 
+for i:=low(w) to high(w) do
+begin
+w[i].real := StrToFloat(aArray.Cells[1, i+1]);
+w[i].imaginary := StrToFloat(aArray.Cells[2, i+1]);
+end;
+ 
+for i:=low(d) to high(d) do
+begin
+d[i].real := StrToFloat(aArray.Cells[1, i+2])*(i+1.0);
+d[i].imaginary := StrToFloat(aArray.Cells[2, i+2])*(i+1.0);
+end;
+ 
+a.real := StrToFloat(aRe.Text);
+a.imaginary := StrToFloat(aIm.Text);
+ 
+ratioX := (max_X - min_X) / Fractal.Width;
+ratioY := (max_Y - min_Y) / Fractal.Height;
+ 
+resultsCnt := 0;
+cSet := colorSet.Checked;
+ 
+for i:=0 to Fractal.Height-1 do
+begin
+p.imaginary := i*ratioY + min_Y;
+for j:=0 to Fractal.Width-1 do
+begin
+p.real := j*ratioX + min_X;
+level := levelSet(a, p, w, d);
+Fractal.Canvas.Pixels[j, i] :=  colors[level];
+end;
+ 
+end;
+Fractal.Refresh();
+ 
+end;
+ 
+procedure TForm1.FormCreate(Sender: TObject);
+begin
+minx.Text := FloatToStr(-1.5);
+maxx.Text := FloatToStr(1.5);
+miny.Text := FloatToStr(-1.5);
+maxy.Text := FloatToStr(1.5);
+ 
+aRe.Text := FloatToStr(1.0);
+aIm.Text := FloatToStr(0.0);
+ 
+aArray.Cells[1,0] := 'p(Re)^n';
+aArray.Cells[2,0] := 'p(Im)^n';
+aArray.Cells[0,0] := 'n';
+aArray.Cells[0,1] := '0';
+aArray.Cells[0,2] := '1';
+aArray.Cells[0,3] := '2';
+aArray.Cells[0,4] := '3';
+aArray.Cells[0,5] := '4';
+aArray.Cells[0,6] := '5';
+ 
+aArray.Cells[1,1] := FloatToStr(-1.0);
+aArray.Cells[1,2] := FloatToStr(0.0);
+aArray.Cells[1,3] := FloatToStr(0.0);
+aArray.Cells[1,4] := FloatToStr(1.0);
+aArray.Cells[1,5] := FloatToStr(0.0);
+aArray.Cells[1,6] := FloatToStr(0.0);
+ 
+aArray.Cells[2,1] := FloatToStr(0.0);
+aArray.Cells[2,2] := FloatToStr(0.0);
+aArray.Cells[2,3] := FloatToStr(0.0);
+aArray.Cells[2,4] := FloatToStr(0.0);
+aArray.Cells[2,5] := FloatToStr(0.0);
+aArray.Cells[2,6] := FloatToStr(0.0);
+ 
+min_X := StrToFloat(minx.Text);
+min_Y := StrToFloat(miny.Text);
+max_X := StrToFloat(maxx.Text);
+max_Y := StrToFloat(maxy.Text);
+ 
+ratioX := (max_X - min_X) / Fractal.Width;
+ratioY := (max_Y - min_Y) / Fractal.Height;
+ 
+//initialize colors
+initializeColors();
+ 
+//render new fractal
+Button1Click(Sender);
+end;
+ 
+procedure TForm1.FractalMouseDown(Sender: TObject; Button: TMouseButton;
+Shift: TShiftState; X, Y: Integer);
+begin
+downX := X;
+downY := Y;
+ 
+Selection.Width := 0;
+Selection.Height := 0;
+Selection.Visible := true;
+end;
+ 
+procedure TForm1.FractalMouseUp(Sender: TObject; Button: TMouseButton;
+Shift: TShiftState; X, Y: Integer);
+begin
+//remove selection
+Selection.Visible := false;
+ 
+//get new range to render
+minx.Text := FloatToStr(min(downX, X)*ratioX + min_X);
+maxx.Text := FloatToStr(max(downX, X)*ratioX + min_X);
+miny.Text := FloatToStr(min(downY, Y)*ratioY + min_Y);
+maxy.Text := FloatToStr(max(downY, Y)*ratioY + min_Y);
+ 
+min_X := StrToFloat(minx.Text);
+min_Y := StrToFloat(miny.Text);
+max_X := StrToFloat(maxx.Text);
+max_Y := StrToFloat(maxy.Text);
+ 
+//render new fractal
+Button1Click(Sender);
+end;
+ 
+procedure TForm1.FractalMouseMove(Sender: TObject; Shift: TShiftState; X,
+Y: Integer);
+begin
+//if left mouse button is held then draw selection
+if (ssLeft in Shift) then
+begin
+Selection.Width := abs(downX - X);
+Selection.Height := abs(downY - Y);
+Selection.Left := Fractal.Left + min(downX, X);
+Selection.Top := Fractal.Top + min(downY, Y);
+end;
+end;
+ 
+end.

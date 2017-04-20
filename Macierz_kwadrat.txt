@@ -1,0 +1,89 @@
+//Program szyfrujacy/deszyfrujacy tekst znajdujacy sie w pliku za pomoca algorytmu
+//przestawieniowego - metoda kwadratu (macierzy)
+<<<<<<< HEAD
+ 55555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555
+=======
+??????????????????????????????????????????????????????????????????????? 
+>>>>>>> TEST
+//Program pobrano ze strony www.algorytm.org
+//Opracowal Krzysztof Mackowiak
+ 
+#include<stdio.h>
+#include<iostream.h>
+#include <math.h>
+ 
+//Program dziala poprawnie dla tekstu o dlugosci max 400 znakow. W przypadku dluzszych tekstow
+//nalezy zmienic wartosci macierzy i tablicy pomocniczej lub zastosowac struktury dynamiczne
+ 
+void main()
+{
+FILE *we, *wy;
+char znak;                   //znak odczytany z pliku
+//Przed uruchomieniem programu nalezy utworzyc 2 pliki - 1. z tekstem jawnym/zaszyfrowanym , 2. pusty
+char plik_wejsciowy[20];         //nazwa pliku wejsciowego
+char plik_wyjsciowy[20];         //nazwa pliku wyjsciowego
+char macierz[20][20];
+char tablica_pomocnicza[400];
+int i,j,k,l,m,n;
+cout<<"Podaj nazwe pliku z tekstem: " ;
+cin>>plik_wejsciowy;             //pobranie nazwy pliku wejsciowego
+cout<<"Podaj nazwe pliku wynikowego: ";
+cin>>plik_wyjsciowy;      //pobranie nazwy pliku wynikowego
+i=0;
+ 
+if((we=fopen(plik_wejsciowy,"rb"))!=NULL)
+{
+if((wy=fopen(plik_wyjsciowy,"wb"))!=NULL)
+{
+ 
+while((znak=getc(we))!=EOF)    //odczytywanie wszystkich znakow z pliku wejsciowego
+{
+tablica_pomocnicza[i]=znak;    //zapisywanie wszystkich znakow to tablicy pomocniczej
+i++;                           //zliczanie wszystkich znakow
+}
+ 
+ 
+j=1;
+do             //dopasowywanie wielkosci macierzy - powiekszamy ilosc kolumn i wierszy tak
+{             //dlugo az pomiesci wszystkie odczytane z pliku znaki
+j++;
+k=j*j;
+}
+while (k<i);
+ 
+for (l=0; l<j; l++)          //wypelnianie macierzy pewnym symbolem - w tym przypadku jest to spacja
+for (m=0;m<j;m++)    //w przypadku gdy macierz nie bedzie w pelni wypelniona tekstem
+{                    //zostanie dopelniona pustymi polami
+macierz[l][m]=32;
+}  
+ 
+m=0; n=0;
+ 
+for (l=0; l<i; l++)       //przepisywanie wszystkich znakow z tablicy pomocniczej do macierzy
+{
+macierz[n][m]=tablica_pomocnicza[l];
+m++;
+if (m==j)             //gdy zapelniony jeden wiersz to do nastepnego
+{
+n++;
+m=0;
+}
+}
+ 
+//odczytywanie znakow z macierzy kolumnami
+for (l=0; l<j; l++)           
+for (m=0;m<j;m++)
+{
+znak=macierz[m][l];
+putc(znak,wy);
+}  
+ 
+ 
+fclose(wy);
+}
+fclose(we);
+ 
+}
+cout<<"Operacja zostala zakonczona";
+return;
+}

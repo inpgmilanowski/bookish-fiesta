@@ -1,0 +1,93 @@
+#include<iostream>
+#include<cstdlib>
+using namespace std;
+<<<<<<< HEAD
+ 77777777777777777777777777777777777777777777777777777777777777777777777777
+=======
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+>>>>>>> TEST
+void sito(bool *tab, unsigned int n)
+{
+  for (int i=2; i*i<=n; i++) //przeszukujemy kolejnych kandydatów na pierwsze
+    {              //wystarczy sprawdziæ do pierwiastka z n
+                  // i<=sqrt(n) - podnosz¹c do kwadratu mamy
+                  // i*i <= n
+        if(!tab[i])        //jesli liczba jest pierwsza(ma wartosc 0)
+    for (int j = i*i ; j<=n; j+=i) //to wykreslamy jej wielokrotnosci
+            tab[j] = 1;      //ustawiaj¹c wartosæ na 1
+    }
+}
+ 
+int main()
+{
+  int n;
+  bool *tab;
+ 
+  cout<<"Podaj zakres górny przedzia³u: ";
+  cin>>n;
+ 
+  tab = new bool [n+1];
+ 
+  for(int i=2; i<=n; i++) //zerowanie tablicy
+    tab[i] = 0;
+ 
+  sito(tab, n); //przesianie liczb
+ 
+  cout<<"Kolejne liczby pierwsze z przedzia³u [2.."<<n<<"]: ";
+ 
+  for(int i=2;i<=n;i++)
+    if(!tab[i])
+      cout<<i<<" ";
+ 
+  cout<<endl;
+ 
+  delete []tab;
+ 
+  system("pause");
+    return 0;
+}
+
+//DRUGA WERSJA
+
+#include<iostream>
+#include<cstdlib>
+using namespace std;
+ 
+void sito(unsigned int *tab, unsigned int n)
+{
+    for (int i=2; i*i<=n; i++) 
+  {    
+      if(!((tab[i>>5]>>(i&63))&1))          
+      for (int j = i*i ; j<=n; j+=i)
+          tab[j>>5] |= (1<<(j&63)); //ustawienie odpowiedniego bitu na 1
+    }
+}
+ 
+int main()
+{
+    unsigned int n, *tab;
+ 
+    cout<<"Podaj zakres górny przedzia³u: ";
+    cin>>n;
+ 
+    tab = new unsigned int [n/32 + 2]; //typ unsigned int sk³ada siê z 32 bitów
+ 
+    for(int i=0; i<= n/32 + 1; i++) //zerowanie tablicy
+    tab[i] = 0;
+ 
+    sito(tab, n); //przesianie liczb
+ 
+    cout<<"Kolejne liczby pierwsze z przedzia³u [2.."<<n<<"]: ";
+ 
+    for(int i=2;i<=n;i++)            
+      if(!((tab[i>>5]>>(i&63))&1))  
+          cout<<i<<" ";
+ 
+    cout<<endl;
+ 
+    delete [] tab;
+ 
+    system("pause");
+    return 0;
+}
+ 

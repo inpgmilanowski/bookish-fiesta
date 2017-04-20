@@ -1,0 +1,160 @@
+//IFS
+//(c) 2011 by Tomasz Lubinski
+
+?????????????????????????????????????????????????????????????????????????????????????
+//www.algorytm.org
+ 4444444444444444444444444444444444444444444444444444444444444444444444444444444
+/* Render area coordinates */
+var minX = -8.0;
+var maxX =  8.0;
+var minY = 11.0;
+var maxY = -5.0;
+ 
+/* Render area size */
+var width = 0;
+var height = 0;
+var ratioX;
+var ratioY;
+ 
+/* IFS data */
+var a = [];
+var b = [];
+var c = [];
+var d = [];
+var e = [];
+var f = [];
+var p = [];
+ 
+/* current point */
+var x, y;
+ 
+/* Number of points */
+var pointsNum = 10000000;
+ 
+/* Fractal image */
+var data;
+var imageData;
+var canvas;
+var ctx;
+ 
+/* add new function to IFS */
+function addFunction(paramA, paramB, paramC, paramD, paramE, paramF, paramP)
+{
+a.push(paramA);
+b.push(paramB);
+c.push(paramC);
+d.push(paramD);
+e.push(paramE);
+f.push(paramF);
+p.push(paramP);
+}
+ 
+/* removes all functions */
+function clearFunctions()
+{
+a = [];
+b = [];
+c = [];
+d = [];
+e = [];
+f = [];
+p = [];
+}
+ 
+/* render Fractal */
+function renderFractal()
+{
+canvas = document.getElementById("canvas");
+ctx = canvas.getContext("2d");
+ 
+// read the width and height of the canvas
+width = canvas.width;
+height = canvas.height;
+ 
+// create a new pixel array
+data = new Array(width * height);
+imageData = ctx.createImageData(width, height);
+ 
+ratioX = (maxX - minX) / width;
+ratioY = (maxY - minY) / height;
+ 
+/* Clear data */
+for (var i=0; i<width*height; i++)
+{
+data[i] = 0;
+}
+ 
+currentPointsNum = 0;
+x = 0;
+y = 0;
+calculateFractal();
+}
+ 
+/* calculate Fractal */
+function calculateFractal()
+{
+/* Calculate data */
+for (i=0; i<pointsNum; i++)
+{
+/* Choose random function */
+r = Math.random();
+curr = 0;
+prob = 0;
+for (j=0; j<p.length; j++)
+{
+prob += p[j];
+if (prob > r)
+{
+curr = j;
+break;
+}
+}
+ 
+/* Perform calculation */
+xtmp = a[curr]*x + b[curr]*y + e[curr];
+ytmp = c[curr]*x + d[curr]*y + f[curr];
+x = xtmp;
+y = ytmp;
+ 
+/* Draw point */
+pointX = Math.floor((x - minX)/ratioX);
+pointY = Math.floor((y - minY)/ratioY);
+data[pointY*width+pointX]++;
+}
+ 
+/* Check range */
+biggest = data[0];
+for (var i=1; i<width*height; i++)
+{
+if (data[i] > biggest)
+{
+biggest = data[i]; 
+}
+}  
+ 
+/* Generate image */
+for (var i=0; i<height; i++)
+{
+for (var j=0; j<width; j++)
+{
+index = (i*width+j)*4;
+imageData.data[index+3] = 0xff;
+if (data[j+i*width] > 0)
+{
+level = (Math.log(data[j+i*width])/Math.log(biggest))*0xff;
+imageData.data[index+0] = 0x80-level/2;
+imageData.data[index+1] = 0xff-level;
+imageData.data[index+2] = 0x80-level/2;
+}
+else
+{
+imageData.data[index+0] = 0xff;
+imageData.data[index+1] = 0xff;
+imageData.data[index+2] = 0xff;
+}
+}
+}  
+ 
+// copy the image data back onto the canvas
+ctx.putImageData(imageData, 0, 0);
+}
