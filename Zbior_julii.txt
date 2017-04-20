@@ -226,7 +226,7 @@ case 1:
 cRe->Text = FloatToStr(-0.75);
 cIm->Text = FloatToStr(0.0);
 break;
-case 2:
+case 2::::
 cRe->Text = FloatToStr(-0.390541);
 cIm->Text = FloatToStr(-0.586788);
 break;
